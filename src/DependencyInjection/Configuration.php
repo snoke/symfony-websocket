@@ -1,5 +1,5 @@
 <?php
-namespace Snoke\SoftDelete\DependencyInjection;
+namespace Snoke\Websocket\DependencyInjection;
 
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
