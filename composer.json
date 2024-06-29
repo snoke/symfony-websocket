@@ -1,0 +1,28 @@
+{
+  "name": "snoke/websocket",
+  "version": "1.0.0",
+  "type": "symfony-bundle",
+  "autoload": {
+    "psr-4": {
+      "Snoke\\Websocket\\": [
+        "src/"
+      ]
+    }
+  },
+  "extra": {
+    "branch-alias": {
+      "dev-main": "1.x-dev"
+    },
+    "symfony": {
+      "allow-contrib": false,
+      "require": "7.0.*"
+    }
+  },
+  "require": {
+    "php": ">=8.2",
+    "cboden/ratchet": "^0.4.4",
+    "symfony/console": "^7.1",
+    "symfony/http-kernel": "^7.1",
+    "symfony/dependency-injection": "^7.1"
+  }
+}
