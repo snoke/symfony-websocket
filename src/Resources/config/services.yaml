@@ -4,12 +4,9 @@ services:
     autoconfigure: true
     public: false
 
-  Snoke\SoftDelete\:
+  Snoke\Websocket\:
     autowire: true
     autoconfigure: true
     resource: '../../'
     exclude:
       - '../../Entity/'
-  Snoke\SoftDelete\EventListener\FlushListener:
-    arguments:
-      $detach: '%snoke_soft_delete.detach%'
