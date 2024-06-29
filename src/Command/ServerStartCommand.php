@@ -3,9 +3,9 @@
 namespace Snoke\Websocket\Command;
 
 use Snoke\Websocket\Server;
-use Ratchet\Http\HttpServer;
-use Ratchet\Server\IoServer;
-use Ratchet\WebSocket\WsServer;
+use Snoke\Websocket\Ratchet\Http\HttpServer;
+use Snoke\Websocket\Ratchet\Server\IoServer;
+use Snoke\Websocket\Ratchet\WebSocket\WsServer;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;

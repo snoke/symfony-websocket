@@ -5,8 +5,8 @@
 
 namespace Snoke\Websocket;
 
-use Ratchet\ConnectionInterface;
-use Ratchet\MessageComponentInterface;
+use Snoke\Websocket\Ratchet\ConnectionInterface;
+use Snoke\Websocket\Ratchet\MessageComponentInterface;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;

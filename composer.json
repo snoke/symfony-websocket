@@ -20,9 +20,12 @@
   },
   "require": {
     "php": ">=8.2",
-    "cboden/ratchet": "^0.4.4",
+    "ratchet/rfc6455": "^0.3.1",
+    "react/socket": "^1.0 || ^0.8 || ^0.7 || ^0.6 || ^0.5",
+    "react/event-loop": ">=0.4",
+    "guzzlehttp/psr7": "^1.7|^2.0",
     "symfony/console": "^7.1",
     "symfony/http-kernel": "^7.1",
-    "symfony/dependency-injection": "^7.1"
+    "symfony/dependency-injection": "^7.1",
   }
 }
