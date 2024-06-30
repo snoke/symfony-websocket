@@ -1,4 +1,5 @@
 # Symfony Websocket Bundle
+Work in progress
 
 ## installation
 
