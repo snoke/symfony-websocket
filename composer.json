@@ -1,5 +1,5 @@
 {
-    "name": "snoke/websocket",
+    "name": "snoke/symfony-websocket",
     "type": "symfony-bundle",
     "autoload": {
         "psr-4": { "Snoke\\Websocket\\": "src/" }
