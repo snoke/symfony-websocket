@@ -2,24 +2,24 @@
 
 namespace Snoke\Websocket\Command;
 
+use React\EventLoop\Loop;
+use React\Socket\SocketServer;
+use Snoke\Websocket\Event\LoginFailed;
+use Snoke\Websocket\Event\LoginSuccessful;
+use Snoke\Websocket\Security\Authenticator;
 use Snoke\Websocket\Event\ConnectionClosed;
 use Snoke\Websocket\Event\ConnectionEstablished;
-use Snoke\Websocket\Event\MessageBeforeSend;
-use Snoke\Websocket\Event\MessageRecieved;
+use Snoke\Websocket\Event\MessageReceived;
 use Snoke\Websocket\Event\Error;
+use Snoke\Websocket\Security\ConnectionWrapper;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use React\EventLoop\Factory;
-use React\Socket\Server;
 use React\Socket\ConnectionInterface;
-use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
-
 
 #[AsCommand(
     name: 'websocket:start',
@@ -27,13 +27,18 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 )]
 class WebsocketStartCommand extends Command
 {
-    protected $connections;
     protected SymfonyStyle $outputDecorator;
     protected EventDispatcherInterface  $eventDispatcher;
-    public function __construct(EventDispatcherInterface  $eventDispatcher)
+    private Authenticator $authenticator;
+    private InputInterface $input;
+    private array $connections;
+
+    public function __construct(EventDispatcherInterface $eventDispatcher, Authenticator $authenticator)
     {
+        $this->authenticator = $authenticator;
         $this->eventDispatcher = $eventDispatcher;
-        $this->connections = new \SplObjectStorage();
+        $this->connections = [];
+
         parent::__construct();
     }
 
@@ -49,33 +54,58 @@ class WebsocketStartCommand extends Command
     {
         $this->input = $input;
         $this->outputDecorator = new SymfonyStyle($input, $output);
-        $loop = Factory::create();
-        $socket = new Server($input->getOption('ip').':' . $input->getOption('port'), $loop);
+        $loop = Loop::get();
+        // TODO: implement SSL config
+        $context = [
+            'tls' => [
+                'local_cert'  => '/path/to/your/server.pem',
+                'local_pk'    => '/path/to/your/private.key',
+                'allow_self_signed' => true,
+                'verify_peer' => false
+            ]
+        ];
+        $socket = new SocketServer($input->getOption('ip').':' . $input->getOption('port'), [], $loop);
 
         $socket->on('connection', function (ConnectionInterface $connection) {
-            $this->log('New connection');
-            $this->eventDispatcher->dispatch(new ConnectionEstablished($connection),ConnectionEstablished::NAME);
 
-            $connection->on('data', function ($data) use ($connection) {
-                $this->log('New data');
-                if (strpos($data, 'Upgrade: websocket') !== false) {
-                    $this->performHandshake($connection, $data);
+            $this->connections[spl_object_id($connection)] = $connectionWrapper = new ConnectionWrapper($connection);
+
+            $connection->on('data', function ($data) use ($connectionWrapper) {
+                if (str_contains($data, 'Upgrade: websocket')) {
+                    $this->performHandshake($connectionWrapper, $data);
+                    $this->eventDispatcher->dispatch(new ConnectionEstablished($this->connections, $connectionWrapper),ConnectionEstablished::NAME);
+                    $this->log('New connection');
                 } else {
-                    $message = $this->decode($data);
-
+                    $message = $this->unmask($data);
                     if ($message && isset($message['type'])) {
                         switch ($message['type']) {
                             case 'message':
-                                $this->eventDispatcher->dispatch(new MessageRecieved($connection, $message['payload']),MessageRecieved::NAME);
+                                $this->eventDispatcher->dispatch(new MessageReceived($this->connections, $connectionWrapper, $message),MessageReceived::NAME);
                                 $this->log('Message Received');
                                 //$this->respondMessage($connection, $message['payload']);
                                 //$this->broadcastMessage($connection, $message['payload']);
                                 break;
+                            case 'login':
+                                $user = $this->authenticator->authenticate($connectionWrapper, $message['payload']['identifier'],$message['payload']['password']);
+                                $connectionWrapper->setUser($user);
+                                if ($user) {
+                                    $this->eventDispatcher->dispatch(new LoginSuccessful($this->connections, $connectionWrapper),LoginSuccessful::NAME);
+
+                                    $this->log('Login successful');
+                                } else {
+                                    $this->log('Login failed');
+                                    $this->eventDispatcher->dispatch(new LoginFailed($this->connections, $connectionWrapper),LoginFailed::NAME);
+                                }
+                                break;
+                            case 'server':
+                                $this->log('server command');
+                                break;
                             case 'ping':
                                 $this->log('Received ping');
-                                $connection->write($this->encode('', 'pong'));
+                                $connectionWrapper->write($this->mask('', 'pong'));
                                 break;
                             default:
+                                $this->eventDispatcher->dispatch(new Error($this->connections, $connectionWrapper, 'Unknown message type: ' . $message['type'],$message),Error::NAME);
                                 $this->log('Unknown message type: ' . $message['type']);
                                 break;
                         }
@@ -85,15 +115,14 @@ class WebsocketStartCommand extends Command
                 }
             });
 
-            $connection->on('close', function () {
-                $this->eventDispatcher->dispatch(new ConnectionClosed($connection),ConnectionClosed::NAME);
-                $this->log('Connection closed');
-                $this->connections->detach($connection);
+            $connection->on('close', function () use ($connectionWrapper){
+                $this->eventDispatcher->dispatch(new ConnectionClosed($this->connections, $connectionWrapper),ConnectionClosed::NAME);
+                $this->connections[$connectionWrapper->getId()] = null;
             });
 
-            $connection->on('error', function ($e) {
+            $connection->on('error', function ($e) use ($connectionWrapper){
+                $this->eventDispatcher->dispatch(new Error($this->connections, $connectionWrapper, $e->getMessage(),$e),Error::NAME);
                 $this->log('Error: ' . $e->getMessage());
-                $this->eventDispatcher->dispatch(new Error($e),Error::NAME);
             });
         });
 
@@ -103,26 +132,24 @@ class WebsocketStartCommand extends Command
         return Command::SUCCESS;
     }
 
-    private function performHandshake(ConnectionInterface $connection, $data)
+    private function performHandshake(ConnectionWrapper $connectionWrapper, $data)
     {
         if (preg_match("/Sec-WebSocket-Key: (.*)\r\n/", $data, $matches)) {
             $key = $matches[1];
             $acceptKey = base64_encode(pack('H*', sha1($key . '258EAFA5-E914-47DA-95CA-C5AB0DC85B11')));
-
             $headers = "HTTP/1.1 101 Switching Protocols\r\n";
             $headers .= "Upgrade: websocket\r\n";
             $headers .= "Connection: Upgrade\r\n";
             $headers .= "Sec-WebSocket-Accept: $acceptKey\r\n\r\n";
 
-            $connection->write($headers);
-            $this->connections->attach($connection);
+            $connectionWrapper->write($headers);
         } else {
             $this->log('Handshake failed: Sec-WebSocket-Key not found');
-            $connection->close();
+            $connectionWrapper->close();
         }
     }
 
-    private function decode($data)
+    private function unmask($data)
     {
         $bytes = unpack('C*', $data);
         $length = $bytes[2] & 127;
@@ -149,7 +176,7 @@ class WebsocketStartCommand extends Command
     {
         foreach ($this->connections as $connection) {
             if ($connection !== $from) {
-                $connection->write($this->encode(json_encode([
+                $connection->write($this->mask(json_encode([
                     'type' => 'message',
                     'payload' => $message,
                 ])));
@@ -159,13 +186,13 @@ class WebsocketStartCommand extends Command
 
     private function respondMessage(ConnectionInterface $from, $message)
     {
-        $from->write($this->encode(json_encode([
+        $from->write($this->mask(json_encode([
                 'type' => 'message',
                 'payload' => $message,
             ])));
     }
 
-    private function encode($payload, $type = 'text', $masked = false)
+    private function mask($payload, $type = 'text', $masked = false)
     {
         $frameHead = array();
         $payloadLength = strlen($payload);

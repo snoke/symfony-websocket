@@ -2,23 +2,13 @@
 
 namespace Snoke\Websocket\Event;
 
-use Symfony\Contracts\EventDispatcher\Event;
-use React\Socket\ConnectionInterface;
+use Snoke\Websocket\Security\ConnectionWrapper;
 
-class ConnectionEstablished extends Event
+class ConnectionEstablished  extends AbstractEvent
 {
     public const NAME = 'websocket.connection_established';
-
-    private $connection;
-    private $payload;
-
-    public function __construct(ConnectionInterface $connection)
+    public function __construct(array $connections, ConnectionWrapper $connection)
     {
-        $this->connection = $connection;
-    }
-
-    public function getConnection(): ConnectionInterface
-    {
-        return $this->connection;
+        parent::__construct($connections,$connection);
     }
 }

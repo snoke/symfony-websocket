@@ -2,22 +2,13 @@
 
 namespace Snoke\Websocket\Event;
 
-use Symfony\Contracts\EventDispatcher\Event;
-use React\Socket\ConnectionInterface;
+use Snoke\Websocket\Security\ConnectionWrapper;
 
-class Error extends Event
+class Error  extends AbstractEvent
 {
     public const NAME = 'websocket.on_error';
-
-    private $error;
-
-    public function __construct($error)
+    public function __construct(array $connections, ConnectionWrapper $connection)
     {
-        $this->error = $error;
-    }
-
-    public function getError()
-    {
-        return $this->error;
+        parent::__construct($connections,$connection);
     }
 }
