@@ -11,6 +11,7 @@ run `php bin/console websocket:start`
 
 with following websocket request body a client can sign in via websockets
 ['type' => 'login', 'payload' => ["identifier" => "john@doe.com","password" => "test"]]
+using the default userprovider 
 
 you can now register EventSubscriber to the following Events:
 - LoginSuccessful
