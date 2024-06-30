@@ -2,17 +2,6 @@
 
 ## installation
 
-Add the custom repository to your composer.json:
-
-```php
-"repositories": [
-    {
-        "type": "vcs",
-        "url": "git@github.com:snoke/symfony-websocket.git"
-    }
-],
-```
-
 checkout library `composer req snoke/symfony-websocket:dev-master`
 
 ## usage
