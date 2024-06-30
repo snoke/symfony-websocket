@@ -4,6 +4,7 @@ use Exception;
 use React\EventLoop\Loop;
 use React\Socket\ConnectionInterface;
 use React\Socket\Connector;
+use Snoke\Websocket\Entity\Request;
 
 class Client
 {
@@ -17,24 +18,26 @@ class Client
         $headers .= "Sec-WebSocket-Version: 13\r\n\r\n";
         $connection->write($headers);
     }
-    public function connect(string $host = '127.0.0.1', int $port = 8080, string $message) {
+    public function connect(Request $request, string $host = '127.0.0.1', int $port = 8080) {
 
         $loop = Loop::get();
         $connector = new Connector($loop);
 
-        $connector->connect($host.':' . $port)->then(function (ConnectionInterface $connection) use ($message)
+        $connector->connect($host.':' . $port)->then(function (ConnectionInterface $connection) use ($request)
         {
             $this->performHandshake($connection);
 
-            $connection->on('data', function ($data) use ($connection, $message) {
+            $connection->on('data', function ($data) use ($connection, $request) {
 
                 if (strpos($data, 'HTTP/1.1 101') === 0) {
-                    $connection->write($this->mask(json_encode(['type' => 'login', 'payload' => ["identifier" => "john@doe.com","password" => "test"]])));
-                    $connection->write($this->mask(json_encode(['type' => 'server', 'payload' => $message])));
+                    $connection->write($this->mask(json_encode(['type' => $request->getType(), 'payload' => [
+                        'command' => $request->getCommand(),
+                        'body' => $request->getBody()
+                    ]])));
                 } else {
                     $decodedMessage = $this->unmask($data);
                     echo "Received: $decodedMessage\n";
-                    $connection->close();
+                    //$connection->close();
                 }
             });
 

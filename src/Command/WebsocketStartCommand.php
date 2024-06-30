@@ -2,16 +2,25 @@
 
 namespace Snoke\Websocket\Command;
 
+use Doctrine\Common\Collections\ArrayCollection;
+use Psr\Log\LoggerInterface;
 use React\EventLoop\Loop;
 use React\Socket\SocketServer;
+use Snoke\Websocket\Entity\Channel;
+use Snoke\Websocket\Entity\Message;
+use Snoke\Websocket\Entity\Request;
+use Snoke\Websocket\Event\CommandReceived;
 use Snoke\Websocket\Event\LoginFailed;
 use Snoke\Websocket\Event\LoginSuccessful;
+use Snoke\Websocket\Event\ServerStarted;
 use Snoke\Websocket\Security\Authenticator;
 use Snoke\Websocket\Event\ConnectionClosed;
 use Snoke\Websocket\Event\ConnectionEstablished;
 use Snoke\Websocket\Event\MessageReceived;
 use Snoke\Websocket\Event\Error;
 use Snoke\Websocket\Security\ConnectionWrapper;
+use Snoke\Websocket\Service\Decoder;
+use Snoke\Websocket\Service\Encoder;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -31,13 +40,18 @@ class WebsocketStartCommand extends Command
     protected EventDispatcherInterface  $eventDispatcher;
     private Authenticator $authenticator;
     private InputInterface $input;
-    private array $connections;
+    private ArrayCollection $connections;
+    private ArrayCollection $channels;
+    private LoggerInterface $logger;
 
-    public function __construct(EventDispatcherInterface $eventDispatcher, Authenticator $authenticator)
+    public function __construct(private readonly Encoder $encoder, private readonly Decoder $decoder, LoggerInterface $logger,EventDispatcherInterface $eventDispatcher, Authenticator $authenticator)
     {
+        $this->connections = new ArrayCollection();
+        $this->channels = new ArrayCollection();
+        $this->channels->add(new Channel('main'));
         $this->authenticator = $authenticator;
         $this->eventDispatcher = $eventDispatcher;
-        $this->connections = [];
+        $this->logger = $logger;
 
         parent::__construct();
     }
@@ -64,66 +78,83 @@ class WebsocketStartCommand extends Command
                 'verify_peer' => false
             ]
         ];
-        $socket = new SocketServer($input->getOption('ip').':' . $input->getOption('port'), [], $loop);
+        $socket = new SocketServer($this->input->getOption('ip').':' . $this->input->getOption('port'), [], $loop);
+        $this->eventDispatcher->dispatch(new ServerStarted($this->channels, $this->connections, null),ServerStarted::NAME);
 
         $socket->on('connection', function (ConnectionInterface $connection) {
+            $connectionWrapper = new ConnectionWrapper($this->encoder, $this->decoder,$connection);
+            $connectionWrapper->addChannel($this->channels->first());
+            $this->connections->add($connectionWrapper);
 
-            $this->connections[spl_object_id($connection)] = $connectionWrapper = new ConnectionWrapper($connection);
+                $connection->on('data', function ($data) use ($connectionWrapper) {
 
-            $connection->on('data', function ($data) use ($connectionWrapper) {
-                if (str_contains($data, 'Upgrade: websocket')) {
-                    $this->performHandshake($connectionWrapper, $data);
-                    $this->eventDispatcher->dispatch(new ConnectionEstablished($this->connections, $connectionWrapper),ConnectionEstablished::NAME);
-                    $this->log('New connection');
-                } else {
-                    $message = $this->unmask($data);
-                    if ($message && isset($message['type'])) {
-                        switch ($message['type']) {
-                            case 'message':
-                                $this->eventDispatcher->dispatch(new MessageReceived($this->connections, $connectionWrapper, $message),MessageReceived::NAME);
-                                $this->log('Message Received');
-                                //$this->respondMessage($connection, $message['payload']);
-                                //$this->broadcastMessage($connection, $message['payload']);
-                                break;
-                            case 'login':
-                                $user = $this->authenticator->authenticate($connectionWrapper, $message['payload']['identifier'],$message['payload']['password']);
-                                $connectionWrapper->setUser($user);
-                                if ($user) {
-                                    $this->eventDispatcher->dispatch(new LoginSuccessful($this->connections, $connectionWrapper),LoginSuccessful::NAME);
+                    try {
 
-                                    $this->log('Login successful');
-                                } else {
-                                    $this->log('Login failed');
-                                    $this->eventDispatcher->dispatch(new LoginFailed($this->connections, $connectionWrapper),LoginFailed::NAME);
+                        if (str_contains($data, 'Upgrade: websocket')) {
+                            $this->performHandshake($connectionWrapper, $data);
+                            $this->eventDispatcher->dispatch(new ConnectionEstablished($this->channels,$this->connections, $connectionWrapper),ConnectionEstablished::NAME);
+                            $this->debugLog('New connection');
+                        } else {
+                            $request = $this->unmask($data);
+                            if ($request && isset($request['type'])) {
+                                switch ($request['type']) {
+                                    case 'message':
+                                        $payload = $request['payload'];
+                                        $channel =isset($request['channel'])  ? $this->channels->filter(function (Channel $channel) use ($request) {
+                                            return $request['channel'] === $channel->getIdentifier();
+                                        })->first() : null;
+                                        $message = new Message($connectionWrapper,$channel,$payload);
+                                        $this->eventDispatcher->dispatch(new MessageReceived($this->channels,$this->connections, $connectionWrapper, $message),MessageReceived::NAME);
+                                        $this->debugLog('Message Received');
+                                        //$this->respondMessage($connection, $message['payload']);
+                                        //$this->broadcastMessage($connection, $message['payload']);
+                                        break;
+                                    case 'command':
+                                        $this->eventDispatcher->dispatch(new CommandReceived($this->channels,$this->connections, $connectionWrapper, new Request($request['command'],$request['payload'])),CommandReceived::NAME);
+
+                                        break;
+                                    case 'server':
+                                        $this->debugLog('server command');
+                                        break;
+                                    case 'ping':
+                                        $this->debugLog('Received ping');
+                                        $connectionWrapper->write($this->mask('', 'pong'));
+                                        break;
+                                    default:
+                                        $this->eventDispatcher->dispatch(new Error($this->channels,$this->connections, $connectionWrapper, 'Unknown message type: ' . $request['type'],$message),Error::NAME);
+                                        $this->debugLog('Unknown message type: ' . $request['type']);
+                                        break;
                                 }
-                                break;
-                            case 'server':
-                                $this->log('server command');
-                                break;
-                            case 'ping':
-                                $this->log('Received ping');
-                                $connectionWrapper->write($this->mask('', 'pong'));
-                                break;
-                            default:
-                                $this->eventDispatcher->dispatch(new Error($this->connections, $connectionWrapper, 'Unknown message type: ' . $message['type'],$message),Error::NAME);
-                                $this->log('Unknown message type: ' . $message['type']);
-                                break;
+                            } else {
+                                $this->debugLog('Invalid message format');
+                            }
                         }
-                    } else {
-                        $this->log('Invalid message format');
+                    } catch(\Exception $e) {
+                        $this->writeErrorLog($e);
                     }
-                }
-            });
 
-            $connection->on('close', function () use ($connectionWrapper){
-                $this->eventDispatcher->dispatch(new ConnectionClosed($this->connections, $connectionWrapper),ConnectionClosed::NAME);
-                $this->connections[$connectionWrapper->getId()] = null;
-            });
+                });
 
-            $connection->on('error', function ($e) use ($connectionWrapper){
-                $this->eventDispatcher->dispatch(new Error($this->connections, $connectionWrapper, $e->getMessage(),$e),Error::NAME);
-                $this->log('Error: ' . $e->getMessage());
-            });
+                $connection->on('close', function () use ($connectionWrapper){
+
+                    try {
+                        $this->eventDispatcher->dispatch(new ConnectionClosed($this->channels,$this->connections, $connectionWrapper),ConnectionClosed::NAME);
+                        $this->connections->removeElement($connectionWrapper);
+                    } catch(\Exception $e) {
+                        $this->writeErrorLog($e);
+                    }
+
+                });
+
+                $connection->on('error', function ($e) use ($connectionWrapper){
+
+                    try {
+                        $this->eventDispatcher->dispatch(new Error($this->channels,$this->connections, $connectionWrapper,$e),Error::NAME);
+                        $this->debugLog('Error: ' . $e->getMessage());
+                    } catch(\Exception $e) {
+                        $this->writeErrorLog($e);
+                    }
+                });
         });
 
         $this->outputDecorator->success('Server running');
@@ -144,7 +175,7 @@ class WebsocketStartCommand extends Command
 
             $connectionWrapper->write($headers);
         } else {
-            $this->log('Handshake failed: Sec-WebSocket-Key not found');
+            $this->debugLog('Handshake failed: Sec-WebSocket-Key not found');
             $connectionWrapper->close();
         }
     }
@@ -189,7 +220,7 @@ class WebsocketStartCommand extends Command
         $from->write($this->mask(json_encode([
                 'type' => 'message',
                 'payload' => $message,
-            ])));
+            ]),'text',true));
     }
 
     private function mask($payload, $type = 'text', $masked = false)
@@ -254,10 +285,17 @@ class WebsocketStartCommand extends Command
         return $frame;
     }
 
-    private function log($message)
+    private function debugLog($message)
     {
+        $this->logger->info('[' . date('Y-m-d H:i:s') . '] ' . $message . PHP_EOL);
         if (filter_var($this->input->getOption('debug'), FILTER_VALIDATE_BOOLEAN)) {
             $this->outputDecorator->note('[' . date('Y-m-d H:i:s') . '] ' . $message . PHP_EOL);
         }
+    }
+
+    private function writeErrorLog(\Exception $e)
+    {
+        $this->outputDecorator->error('[' . date('Y-m-d H:i:s') . '] ' . $e . PHP_EOL);
+        $this->logger->error('[' . date('Y-m-d H:i:s') . '] ' . $e->getMessage(),$e);
     }
 }

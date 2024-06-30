@@ -2,8 +2,13 @@
 
 namespace Snoke\Websocket\Security;
 
+use Doctrine\Common\Collections\ArrayCollection;
 use React\Socket\ConnectionInterface;
 use React\Stream\WritableStreamInterface;
+use Snoke\Websocket\Entity\Channel;
+use Snoke\Websocket\Entity\Response;
+use Snoke\Websocket\Service\Decoder;
+use Snoke\Websocket\Service\Encoder;
 use Symfony\Component\Security\Core\User\UserInterface;
 
 class ConnectionWrapper implements ConnectionInterface
@@ -11,10 +16,43 @@ class ConnectionWrapper implements ConnectionInterface
     private int $id;
     private ?UserInterface $user;
     private ConnectionInterface $connection;
-    public function __construct(ConnectionInterface $connection) {
+    private ArrayCollection $channels;
+
+    public function __construct(
+        private readonly Encoder $encoder,
+        private readonly Decoder $decoder,
+        ConnectionInterface $connection
+    ) {
+        $this->channels = new ArrayCollection();
         $this->id = spl_object_id($connection);
         $this->connection = $connection;
     }
+
+    /**
+     * @return ArrayCollection
+     */
+    public function getChannels(): ArrayCollection
+    {
+        return $this->channels;
+    }
+    public function addChannel(Channel $channel): void {
+        if (!$this->channels->contains($channel)) {
+            $this->channels->add($channel);
+        }
+    }
+    public function removeChannel(Channel $channel): void {
+        if ($this->channels->contains($channel)) {
+            $this->channels->removeElement($channel);
+        }
+    }
+
+    public function sendResponse(Response $response) {
+        $this->write($this->encoder->mask(json_encode([
+            'type' => $response->getCommand(),
+            'payload' => $response->getBody(),
+        ]),$response->getType(),$response->isMasked()));
+    }
+
     public function getId(): int
     {
         return $this->id;
