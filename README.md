@@ -8,12 +8,12 @@ Add the custom repository to your composer.json:
 "repositories": [
     {
         "type": "vcs",
-        "url": "git@github.com:snoke/websocket.git"
+        "url": "git@github.com:snoke/symfony-websocket.git"
     }
 ],
 ```
 
-checkout library `composer req snoke/websocket:dev-master`
+checkout library `composer req snoke/symfony-websocket:dev-master`
 
 ## usage
 
