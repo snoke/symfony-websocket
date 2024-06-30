@@ -20,6 +20,7 @@ checkout library `composer req snoke/websocket:dev-master`
 run `php bin/console websocket:start`
 
 you can now register EventSubscriber to the following Events:
+- ServerStarted
 - ConnectionClosed
 - ConnectionEstablished
 - MessageBeforeSend
