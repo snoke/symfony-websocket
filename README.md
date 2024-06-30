@@ -21,9 +21,9 @@ run `php bin/console websocket:start`
 
 you can now register EventSubscriber to the following Events:
 - ServerStarted
-- ConnectionClosed
 - ConnectionEstablished
-- MessageSent
+- ConnectionClosed
 - MessageBeforeSend
+- MessageSent
 - MessageRecieved
 - Error
