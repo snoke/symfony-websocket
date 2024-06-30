@@ -23,7 +23,7 @@ you can now register EventSubscriber to the following Events:
 - ServerStarted
 - ConnectionClosed
 - ConnectionEstablished
+- MessageSent
 - MessageBeforeSend
-- MessageBeforeSent
 - MessageRecieved
 - Error
