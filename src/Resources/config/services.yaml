@@ -10,3 +10,5 @@ services:
     resource: '../../'
     exclude:
       - '../../Entity/'
+
+  Snoke\Websocket\Command\WebsocketStartCommand:
