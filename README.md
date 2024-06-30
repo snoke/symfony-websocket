@@ -9,37 +9,56 @@ checkout library `composer req snoke/symfony-websocket:dev-master`
 
 run `php bin/console websocket:start`
 
-with following websocket request body a client can sign in via websockets
-['type' => 'login', 'payload' => ["identifier" => "john@doe.com","password" => "test"]]
-using the default userprovider 
 
 you can now register EventSubscriber to the following Events:
-- LoginSuccessful
-- LoginFailed
+- ServerStarted
 - ConnectionEstablished
 - ConnectionClosed
+- CommandReceived
 - MessageRecieved
 - Error
 
 ### example usage:
+the following code will authenticate the connection using the default userprovider on following websocket request body
+
+Websocket-Request:
+```
+['type' => 'command', 'command  => 'auth', 'payload' => [
+    "identifier" => "john@doe.com","password" => "test
+"]]
+```
+
+The Listener:
 ```php
 namespace App\EventSubscriber;
 
-use Snoke\Websocket\Event\LoginSuccessful;
+use App\Service\Authenticator;
+use Snoke\Websocket\Event\CommandReceived;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
-class LoginSuccessfulSubscriber implements EventSubscriberInterface
+readonly class AuthListener implements EventSubscriberInterface
 {
+    public function __construct(private Authenticator $authenticator) {
+
+    }
     public static function getSubscribedEvents(): array
     {
         return [
-            LoginSuccessful::NAME => 'onLoginSuccessful',
+            CommandReceived::NAME => 'onCommandReceived',
         ];
     }
-
-    public function onLoginSuccessful(LoginSuccessful $event)
+    public function onCommandReceived(CommandReceived $event): void
     {
-        $user = $event->getConnection()->getUser();
-        $user->setLastLogin(new \DateTime());
-        ...
+        $connection = $event->getConnection();
+        $request = $event->getRequest();
+        $payload = $request->getBody();
+
+        if ($request->getCommand() === 'auth') {
+            $user = $this->authenticator->authenticate($payload['identifier'],$payload['password']);
+            if ($user) {
+                $connection->setUser($user);
+            }
+        }
+    }
+}
 ```
