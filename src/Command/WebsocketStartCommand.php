@@ -2,6 +2,11 @@
 
 namespace Snoke\Websocket\Command;
 
+use Snoke\Websocket\Event\ConnectionClosed;
+use Snoke\Websocket\Event\ConnectionEstablished;
+use Snoke\Websocket\Event\MessageBeforeSend;
+use Snoke\Websocket\Event\MessageRecieved;
+use Snoke\Websocket\Event\Error;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -12,6 +17,9 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 use React\EventLoop\Factory;
 use React\Socket\Server;
 use React\Socket\ConnectionInterface;
+use Symfony\Component\EventDispatcher\EventDispatcher;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+
 
 #[AsCommand(
     name: 'websocket:start',
@@ -21,8 +29,10 @@ class WebsocketStartCommand extends Command
 {
     protected $connections;
     protected SymfonyStyle $outputDecorator;
-    public function __construct()
+    protected EventDispatcherInterface  $eventDispatcher;
+    public function __construct(EventDispatcherInterface  $eventDispatcher)
     {
+        $this->eventDispatcher = $eventDispatcher;
         $this->connections = new \SplObjectStorage();
         parent::__construct();
     }
@@ -44,6 +54,7 @@ class WebsocketStartCommand extends Command
 
         $socket->on('connection', function (ConnectionInterface $connection) {
             $this->log('New connection');
+            $this->eventDispatcher->dispatch(new ConnectionEstablished($connection),ConnectionEstablished::NAME);
 
             $connection->on('data', function ($data) use ($connection) {
                 $this->log('New data');
@@ -55,6 +66,7 @@ class WebsocketStartCommand extends Command
                     if ($message && isset($message['type'])) {
                         switch ($message['type']) {
                             case 'message':
+                                $this->eventDispatcher->dispatch(new MessageRecieved($connection, $message['payload']),MessageRecieved::NAME);
                                 $this->log('Message Received');
                                 //$this->respondMessage($connection, $message['payload']);
                                 //$this->broadcastMessage($connection, $message['payload']);
@@ -74,16 +86,18 @@ class WebsocketStartCommand extends Command
             });
 
             $connection->on('close', function () {
+                $this->eventDispatcher->dispatch(new ConnectionClosed($connection),ConnectionClosed::NAME);
                 $this->log('Connection closed');
                 $this->connections->detach($connection);
             });
 
             $connection->on('error', function ($e) {
                 $this->log('Error: ' . $e->getMessage());
+                $this->eventDispatcher->dispatch(new Error($e),Error::NAME);
             });
         });
 
-        $this->io->success('Server running');
+        $this->outputDecorator->success('Server running');
         $loop->run();
 
         return Command::SUCCESS;
@@ -216,7 +230,7 @@ class WebsocketStartCommand extends Command
     private function log($message)
     {
         if (filter_var($this->input->getOption('debug'), FILTER_VALIDATE_BOOLEAN)) {
-            $this->io->note('[' . date('Y-m-d H:i:s') . '] ' . $message . PHP_EOL);
+            $this->outputDecorator->note('[' . date('Y-m-d H:i:s') . '] ' . $message . PHP_EOL);
         }
     }
 }
