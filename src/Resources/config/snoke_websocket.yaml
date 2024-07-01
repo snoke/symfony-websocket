@@ -1,0 +1,8 @@
+snoke_websocket:
+  context: []
+#  context:
+#    tls:
+#      local_cert: 'path/to/server.pem'
+#      local_pk: 'path/to/private.key'
+#      allow_self_signed: true
+#      verify_peer: false
