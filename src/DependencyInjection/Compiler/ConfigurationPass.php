@@ -11,14 +11,11 @@ class ConfigurationPass implements CompilerPassInterface
     {
         $configFile = $container->getParameter('kernel.project_dir') . '/config/packages/snoke_websocket.yaml';
 
-        if (!file_exists($configFile)) {
-            $defaultConfig = [
-                'snoke_websocket' => [
-                    'context' => [],
-                ],
-            ];
+        $bundleConfigFile = __DIR__ . '/../../Resources/config/snoke_websocket.yaml';
 
-            file_put_contents($configFile, Yaml::dump($defaultConfig, 3));
+        if (!file_exists($configFile)) {
+            $defaultConfig = file_get_contents($bundleConfigFile);
+            file_put_contents($configFile, $defaultConfig);
         }
     }
 }
