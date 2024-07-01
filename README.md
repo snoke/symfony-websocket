@@ -42,7 +42,7 @@ to react to WebSocket events, create your own listeners and register them with t
 
 Websocket-Request
 ```
-['type' => 'command', 'command  => 'auth', 'payload' => [
+['type' => 'auth', 'payload' => [
     "identifier" => "john@doe.com","password" => "test
 "]]
 ```
