@@ -40,16 +40,15 @@ You can optionally specify the IP address and port:
 
 o react to WebSocket events, create your own listeners and register them with the Symfony event dispatcher.
 
-Example of a listener:
-
-Websocket-Request:
+Websocket-Request
 ```
 ['type' => 'command', 'command  => 'auth', 'payload' => [
     "identifier" => "john@doe.com","password" => "test
 "]]
 ```
 
-The Listener:
+Example of a listener:
+
 ```php
 namespace App\EventListener;
 
