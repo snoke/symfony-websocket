@@ -18,7 +18,7 @@ snoke_websocket:
             verify_peer: false
 ````
 
-if you want to use no SSL:
+if you want to use no TLS:
 ````yml
 snoke_websocket:
     context: []
@@ -70,7 +70,7 @@ final class AuthListener
             if ($user) {
                 $connection->setUser($user);
                 
-                $connection->sendResponse($user->getRoles());
+                $connection->send($user->getRoles());
             }
         }
     }
@@ -85,3 +85,10 @@ this example also shows how the ConnectionWrapper contains a User property which
 - ConnectionClosed: Triggered when a connection is closed.
 - Error: Triggered when an error occurs.
 
+## Broadcasting
+you can access all connections in the Listeners through the event
+```php
+foreach($event->getConnections() as $connection) {
+    $connection->send($message);
+}
+```
