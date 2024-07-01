@@ -2,6 +2,8 @@
 namespace Snoke\Websocket;
 
 use Snoke\Websocket\DependencyInjection\Compiler\ConfigurationPass;
+use Snoke\Websocket\DependencyInjection\Compiler\UninstallPass;
+use Symfony\Component\DependencyInjection\Compiler\PassConfig;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\ExtensionInterface;
 use Symfony\Component\HttpKernel\Bundle\Bundle;
@@ -20,5 +22,6 @@ class SnokeWebsocketBundle extends Bundle
     {
         parent::build($container);
         $container->addCompilerPass(new ConfigurationPass());
+        $container->addCompilerPass(new UninstallPass(), PassConfig::TYPE_BEFORE_REMOVING);
     }
 }

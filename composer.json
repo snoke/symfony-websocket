@@ -9,12 +9,12 @@
             "dev-main": "1.x-dev"
         },
         "symfony": {
-            "allow-contrib": false,
+            "allow-contrib": true,
             "require": "7.1.*"
         }
     },
     "require": {
-        "php": ">=8.1",
+        "php": "^8.1",
         "react/socket": "^1.15",
         "react/event-loop": "^1.5",
         "symfony/console": "^7.1",

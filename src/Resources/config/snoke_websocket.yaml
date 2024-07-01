@@ -1,5 +1,6 @@
 snoke_websocket:
   context: []
+# configure following lines to use TLS
 #  context:
 #    tls:
 #      local_cert: 'path/to/server.pem'
