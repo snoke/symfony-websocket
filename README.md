@@ -38,7 +38,7 @@ You can optionally specify the IP address and port:
 
 ### Registering Event Listeners
 
-o react to WebSocket events, create your own listeners and register them with the Symfony event dispatcher.
+to react to WebSocket events, create your own listeners and register them with the Symfony event dispatcher.
 
 Websocket-Request
 ```
