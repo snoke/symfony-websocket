@@ -22,6 +22,8 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 class WebsocketServer
 {
+    private const GUID = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11';
+
     private ArrayCollection $connections;
     private LoggerInterface $logger;
     private EventDispatcherInterface $eventDispatcher;
@@ -29,6 +31,7 @@ class WebsocketServer
     private Decoder $decoder;
     private ?SymfonyStyle $outputDecorator;
     private ParameterBagInterface $params;
+    private bool $debug;
 
     public function __construct(
         ParameterBagInterface $params,
@@ -48,6 +51,7 @@ class WebsocketServer
 
     public function start(SymfonyStyle $outputDecorator, string $ip, string $port, bool $debug): void
     {
+        $this->debug = $debug;
         $this->outputDecorator = $outputDecorator;
         $loop = Loop::get();
 
@@ -57,7 +61,7 @@ class WebsocketServer
         $this->eventDispatcher->dispatch(new ServerStarted($this->connections, null));
 
         $socket->on('connection', function (ConnectionInterface $connection) {
-            $connectionWrapper = new ConnectionWrapper($this->encoder, $this->decoder, $connection);
+            $connectionWrapper = new ConnectionWrapper($this->encoder, $connection);
             $this->connections->add($connectionWrapper);
 
             $connection->on('data', function ($data) use ($connectionWrapper) {
@@ -65,7 +69,7 @@ class WebsocketServer
                     if (str_contains($data, 'Upgrade: websocket')) {
                         $this->performHandshake($connectionWrapper, $data);
                         $this->eventDispatcher->dispatch(new ConnectionEstablished($this->connections, $connectionWrapper));
-                        $this->debugLog('New connection');
+                        $this->debugLog('New connection from ' . $connectionWrapper->getRemoteAddress());
                     } else {
                         $request = $this->decoder->unmask($data);
                         if ($request && isset($request['type'])) {
@@ -93,18 +97,12 @@ class WebsocketServer
             });
 
             $connection->on('error', function ($e) use ($connectionWrapper) {
-                $this->debugLog('Error: ' . $e->getMessage());
+                $this->eventDispatcher->dispatch(new Error($this->connections, $connectionWrapper, $e));
                 $this->writeErrorLog($e);
-                try {
-                    $this->eventDispatcher->dispatch(new Error($this->connections, $connectionWrapper, $e));
-                } catch (\Throwable $e) {
-                    $this->debugLog('Error: ' . $e->getMessage());
-                    $this->writeErrorLog($e);
-                }
             });
         });
 
-        $this->outputDecorator->success('Server started');
+        $this->outputDecorator->success('Server started on port ' .$port );
         $loop->run();
     }
 
@@ -112,11 +110,14 @@ class WebsocketServer
     {
         if (preg_match("/Sec-WebSocket-Key: (.*)\r\n/", $data, $matches)) {
             $key = $matches[1];
-            $acceptKey = base64_encode(pack('H*', sha1($key . '258EAFA5-E914-47DA-95CA-C5AB0DC85B11')));
-            $headers = "HTTP/1.1 101 Switching Protocols\r\n";
-            $headers .= "Upgrade: websocket\r\n";
-            $headers .= "Connection: Upgrade\r\n";
-            $headers .= "Sec-WebSocket-Accept: $acceptKey\r\n\r\n";
+            $acceptKey = base64_encode(pack('H*', sha1($key . self::GUID)));
+            $headers = [
+                "HTTP/1.1 101 Switching Protocols",
+                "Upgrade: websocket",
+                "Connection: Upgrade",
+                "Sec-WebSocket-Accept: $acceptKey"
+            ];
+            $headers = implode("\r\n", $headers) . "\r\n\r\n";
 
             $connectionWrapper->write($headers);
         } else {
@@ -127,11 +128,19 @@ class WebsocketServer
 
     private function debugLog($message): void
     {
-        $this->logger->info('[' . date('Y-m-d H:i:s') . '] ' . $message . PHP_EOL);
+        $date = date('Y-m-d H:i:s');
+        if ($this->debug) {
+            $this->outputDecorator->info('[' . $date . '] ' . $message);
+        }
+        $this->logger->info('[' . $date . '] ' . $message . PHP_EOL);
     }
 
     private function writeErrorLog(\Throwable $e): void
     {
-        $this->logger->error('[' . date('Y-m-d H:i:s') . '] ' . $e->getMessage(), (array)$e);
+        $date = date('Y-m-d H:i:s');
+        if ($this->debug) {
+            $this->outputDecorator->error('[' . $date . '] ' . $e->getMessage());
+        }
+        $this->logger->error('[' . $date . '] ' . $e->getMessage(), (array)$e);
     }
 }

@@ -4,7 +4,6 @@ namespace Snoke\Websocket\Security;
 
 use React\Socket\ConnectionInterface;
 use React\Stream\WritableStreamInterface;
-use Snoke\Websocket\Service\Decoder;
 use Snoke\Websocket\Service\Encoder;
 use Symfony\Component\Security\Core\User\UserInterface;
 
@@ -16,18 +15,19 @@ class ConnectionWrapper implements ConnectionInterface
 
     public function __construct(
         private readonly Encoder $encoder,
-        private readonly Decoder $decoder,
         ConnectionInterface $connection
     ) {
         $this->id = spl_object_id($connection);
         $this->connection = $connection;
     }
 
-    public function sendResponse(mixed $payload, string $type = 'message', bool $masked = true) {
+    public function send(mixed $payload, string $type = 'message', bool $masked = true): static
+    {
         $this->write($this->encoder->mask(json_encode([
             'type' => $type,
             'payload' => $payload,
         ]),'text',$masked));
+        return $this;
     }
 
     public function getId(): int

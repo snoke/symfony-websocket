@@ -1,5 +1,5 @@
-# Symfony Server Websocket Bundle
-Work in progress
+# Symfony Server Websocket Server Bundle
+Websocket Server Bundle for Symfony 7.1
 
 ## installation
 
