@@ -7,6 +7,24 @@ checkout library
 
 `composer req snoke/symfony-websocket:dev-master`
 
+modify config/packages/snoke_websocket.yaml:
+````
+snoke_websocket:
+    context:
+        tls:
+        local_cert: 'path/to/server.pem'
+        local_pk: 'path/to/private.key'
+        allow_self_signed: true
+        verify_peer: false
+````
+
+if you want to use no SSL:
+````
+snoke_websocket:
+    context: []
+````
+note that websockets without SSL only work on localhost
+
 ## usage
 ### Starting the WebSocket Server
 
@@ -33,35 +51,24 @@ Websocket-Request:
 
 The Listener:
 ```php
-namespace App\EventSubscriber;
+namespace App\EventListener;
 
-use App\Service\Authenticator;
-use Snoke\Websocket\Event\CommandReceived;
-use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use Snoke\Websocket\Event\RequestReceived;
+use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 
-readonly class AuthListener implements EventSubscriberInterface
+#[AsEventListener(event: RequestReceived::class, method: 'onRequestReceived')]
+final class AuthListener
 {
-    public function __construct(private Authenticator $authenticator) {
-
-    }
-    public static function getSubscribedEvents(): array
+    public function onRequestReceived(RequestReceived $event): void
     {
-        return [
-            CommandReceived::NAME => 'onCommandReceived',
-        ];
-    }
-    public function onCommandReceived(CommandReceived $event): void
-    {
-        $connection = $event->getConnection();
         $request = $event->getRequest();
-        $payload = $request->getBody();
-
-        if ($request->getCommand() === 'auth') {
+        $connection = $event->getConnection();
+        if ($request['type'] === 'auth') {
             $user = $this->authenticator->authenticate($payload['identifier'],$payload['password']);
             if ($user) {
                 $connection->setUser($user);
-                $response = new Response('auth',$user->getRoles());
-                $connection->sendResponse($response);
+                
+                $connection->sendResponse($user->getRoles());
             }
         }
     }
@@ -71,8 +78,7 @@ readonly class AuthListener implements EventSubscriberInterface
 ### Available Events
 - ServerStarted: Triggered when the server is started
 - ConnectionOpened: Triggered when a new connection is established.
-- MessageReceived: Triggered when a message is received.
-- CommandReceived: Triggered when a command is received.
+- RequestReceived: Triggered when a message is received.
 - ConnectionClosed: Triggered when a connection is closed.
 - Error: Triggered when an error occurs.
 

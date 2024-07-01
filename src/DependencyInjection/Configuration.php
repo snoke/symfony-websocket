@@ -12,7 +12,19 @@ class Configuration implements ConfigurationInterface
 
         $rootNode = $treeBuilder->getRootNode();
         $rootNode
-        ->end();
+            ->children()
+            ->arrayNode('context')->children()
+                ->arrayNode('tls')->children()
+                    ->scalarNode('local_cert')->end()
+                    ->scalarNode('local_pk')->end()
+                    ->booleanNode('allow_self_signed')->end()
+                    ->booleanNode('verify_peer')->end()
+                ->end()
+            ->end()
+            ->end()
+            ->end()
+            ->end();
+
 
         return $treeBuilder;
     }

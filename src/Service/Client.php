@@ -4,10 +4,10 @@ use Exception;
 use React\EventLoop\Loop;
 use React\Socket\ConnectionInterface;
 use React\Socket\Connector;
-use Snoke\Websocket\Entity\Request;
 
-class Client
+readonly class Client
 {
+
     private function performHandshake(ConnectionInterface $connection) {
         // Perform WebSocket handshake
         $headers = "GET / HTTP/1.1\r\n";
@@ -18,22 +18,30 @@ class Client
         $headers .= "Sec-WebSocket-Version: 13\r\n\r\n";
         $connection->write($headers);
     }
-    public function connect(Request $request, string $host = '127.0.0.1', int $port = 8080) {
+    public function __construct(
+        private string $host = '127.0.0.1',
+        private int    $port = 8080,
+        private string $type = 'message',
+        private mixed  $payload
+    ) {
+    }
+    public function connect() {
 
+        $port = $this->port;
+        $host = $this->host;
+        $type = $this->type;
+        $payload = $this->payload;
         $loop = Loop::get();
         $connector = new Connector($loop);
 
-        $connector->connect($host.':' . $port)->then(function (ConnectionInterface $connection) use ($request)
+        $connector->connect($host.':' . $port)->then(function (ConnectionInterface $connection) use ($type,$payload)
         {
             $this->performHandshake($connection);
 
-            $connection->on('data', function ($data) use ($connection, $request) {
+            $connection->on('data', function ($data) use ($connection, $type, $payload) {
 
                 if (strpos($data, 'HTTP/1.1 101') === 0) {
-                    $connection->write($this->mask(json_encode(['type' => $request->getType(), 'payload' => [
-                        'command' => $request->getCommand(),
-                        'body' => $request->getBody()
-                    ]])));
+                    $connection->write($this->mask(json_encode([$type, $payload])));
                 } else {
                     $decodedMessage = $this->unmask($data);
                     echo "Received: $decodedMessage\n";
@@ -72,7 +80,7 @@ class Client
         }
         return $text;
     }
-    private function mask($payload, $type = 'text', $masked = true)
+    private function mask(string $payload, string $type = 'text', bool $masked = true)
     {
         $frameHead = array();
         $payloadLength = strlen($payload);

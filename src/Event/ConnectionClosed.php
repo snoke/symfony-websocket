@@ -7,11 +7,9 @@ use Snoke\Websocket\Security\ConnectionWrapper;
 
 class ConnectionClosed extends AbstractEvent
 {
-    public const NAME = 'websocket.connection_closed';
 
-
-    public function __construct(ArrayCollection $channels, ArrayCollection $connections, ?ConnectionWrapper $connection)
+    public function __construct(ArrayCollection $connections, ?ConnectionWrapper $connection)
     {
-        parent::__construct($channels,$connections,$connection);
+        parent::__construct($connections,$connection);
     }
 }

@@ -4,17 +4,16 @@ namespace Snoke\Websocket\Event;
 
 use Doctrine\Common\Collections\ArrayCollection;
 use Snoke\Websocket\Security\ConnectionWrapper;
+use Throwable;
 
 class Error  extends AbstractEvent
 {
-    public const NAME = 'websocket.on_error';
 
-    private  $error;
+    private Throwable $error;
 
-
-    public function __construct(ArrayCollection $channels, ArrayCollection $connections, ?ConnectionWrapper $connection,  $error)
+    public function __construct(ArrayCollection $connections, ?ConnectionWrapper $connection,  Throwable $error)
     {
-        parent::__construct($channels,$connections,$connection);
+        parent::__construct($connections,$connection);
         $this->error = $error;
     }
     public function getError()

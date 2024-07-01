@@ -10,9 +10,13 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 class SnokeWebsocketBundle extends Bundle
 {
 
-    public function __construct()
+    public function getContainerExtension(): ?ExtensionInterface
     {
-    }
+        if (null === $this->extension) {
+            $this->extension = new DependencyInjection\SnokeWebsocketExtension();
+        }
 
+        return $this->extension;
+    }
 
 }

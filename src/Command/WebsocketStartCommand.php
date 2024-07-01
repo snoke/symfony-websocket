@@ -12,6 +12,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 #[AsCommand(
@@ -20,12 +21,10 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 )]
 class WebsocketStartCommand extends Command
 {
-    private SymfonyStyle $outputDecorator;
     private WebsocketServer $websocketServer;
-
-    public function __construct(Encoder $encoder, Decoder $decoder, LoggerInterface $logger, EventDispatcherInterface $eventDispatcher, array $channels = ['main'])
+    public function __construct(ParameterBagInterface $params,Encoder $encoder, Decoder $decoder, LoggerInterface $logger, EventDispatcherInterface $eventDispatcher)
     {
-        $this->websocketServer = new WebsocketServer($encoder, $decoder, $logger, $eventDispatcher, $channels);
+        $this->websocketServer = new WebsocketServer($params,$encoder, $decoder, $logger, $eventDispatcher);
         parent::__construct();
     }
 
@@ -44,7 +43,7 @@ class WebsocketStartCommand extends Command
         $ip = $input->getOption('ip');
         $port = $input->getOption('port');
 
-        $this->websocketServer->start($ip, $port, $debug, $outputDecorator);
+        $this->websocketServer->start($outputDecorator,$ip, $port, $debug);
 
 
         return Command::SUCCESS;
