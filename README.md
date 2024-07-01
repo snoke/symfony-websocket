@@ -7,8 +7,8 @@ checkout library
 
 `composer req snoke/symfony-websocket:dev-master`
 
-modify config/packages/snoke_websocket.yaml:
-````
+modify `config/packages/snoke_websocket.yaml`:
+````yml
 snoke_websocket:
     context:
         tls:
@@ -19,7 +19,7 @@ snoke_websocket:
 ````
 
 if you want to use no SSL:
-````
+````yml
 snoke_websocket:
     context: []
 ````
@@ -41,10 +41,13 @@ You can optionally specify the IP address and port:
 to react to WebSocket events, create your own listeners and register them with the Symfony event dispatcher.
 
 Websocket-Request
-```
-['type' => 'auth', 'payload' => [
-    "identifier" => "john@doe.com","password" => "test
-"]]
+```javascript
+{
+    type => 'auth', payload => {
+        identifier => "john@doe.com",
+        password => "test"
+    }
+}
 ```
 
 Example of a listener:
