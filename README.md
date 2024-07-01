@@ -73,6 +73,7 @@ final class AuthListener
     }
 }
 ```
+this example also shows how the ConnectionWrapper contains a User property which enables you to match Connections to Users
 
 ### Available Events
 - ServerStarted: Triggered when the server is started
