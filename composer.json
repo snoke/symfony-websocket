@@ -1,6 +1,13 @@
 {
     "name": "snoke/symfony-websocket",
     "type": "symfony-bundle",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Stefan Sander",
+            "email": "mail@stefan-sander.online"
+        }
+    ],
     "autoload": {
         "psr-4": { "Snoke\\Websocket\\": "src/" }
     },

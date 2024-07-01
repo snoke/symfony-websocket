@@ -3,20 +3,9 @@ Websocket Server Bundle for Symfony 7.1
 
 ## installation
 
-
-Add the custom repository to your composer.json:
-
-```php
-"repositories": [
-    {
-        "type": "vcs",
-        "url": "git@github.com:snoke/symfony-websocket.git"
-    }
-],
-```
 checkout library 
 
-`composer req snoke/symfony-websocket:dev-master`
+`composer req snoke/symfony-websocket`
 
 modify `config/packages/snoke_websocket.yaml`:
 ````yml
