@@ -3,23 +3,26 @@ Work in progress
 
 ## installation
 
-checkout library `composer req snoke/symfony-websocket:dev-master`
+checkout library 
+
+`composer req snoke/symfony-websocket:dev-master`
 
 ## usage
+### Starting the WebSocket Server
 
-run `php bin/console websocket:start`
+Use the Symfony console command to start the WebSocket server
 
+`php bin/console websocket:start`
 
-you can now register EventSubscriber to the following Events:
-- ServerStarted
-- ConnectionEstablished
-- ConnectionClosed
-- CommandReceived
-- MessageRecieved
-- Error
+You can optionally specify the IP address and port:
 
-### example usage:
-the following code will authenticate the connection using the default userprovider on following websocket request body
+`php bin/console websocket:start --ip=127.0.0.1 --port=9000`
+
+### Registering Event Listeners
+
+o react to WebSocket events, create your own listeners and register them with the Symfony event dispatcher.
+
+Example of a listener:
 
 Websocket-Request:
 ```
@@ -57,8 +60,19 @@ readonly class AuthListener implements EventSubscriberInterface
             $user = $this->authenticator->authenticate($payload['identifier'],$payload['password']);
             if ($user) {
                 $connection->setUser($user);
+                $response = new Response('auth',$user->getRoles());
+                $connection->sendResponse($response);
             }
         }
     }
 }
 ```
+
+### Available Events
+- ServerStarted: Triggered when the server is started
+- ConnectionOpened: Triggered when a new connection is established.
+- MessageReceived: Triggered when a message is received.
+- CommandReceived: Triggered when a command is received.
+- ConnectionClosed: Triggered when a connection is closed.
+- Error: Triggered when an error occurs.
+

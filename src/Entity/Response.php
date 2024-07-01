@@ -6,15 +6,15 @@ class Response
 {
 
 
-    private string $body;
+    private mixed $body;
     private string $command;
 
-    public function __construct(string $command,string $body, private readonly string $type = 'text', private readonly bool $masked = true)
+    public function __construct(string $command,mixed $body, private readonly string $type = 'text', private readonly bool $masked = true)
     {
         $this->body = $body;
         $this->command = $command;
     }
-    public function getBody(): string {
+    public function getBody(): mixed {
         return $this->body;
     }
     public function getCommand(): string {

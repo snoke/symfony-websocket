@@ -16,6 +16,8 @@
     "require": {
         "php": ">=8.1",
         "react/socket": "^1.15",
-        "react/event-loop": "^1.5"
+        "react/event-loop": "^1.5",
+        "symfony/console": "^7.1",
+        "symfony/event-dispatcher": "^7.1",
     }
 }

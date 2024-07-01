@@ -2,8 +2,6 @@
 
 namespace Snoke\Websocket\Entity;
 
-use Snoke\Websocket\Security\ConnectionWrapper;
-
 class Request
 {
 
