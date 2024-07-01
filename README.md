@@ -23,7 +23,7 @@ if you want to use no SSL:
 snoke_websocket:
     context: []
 ````
-note that websockets without SSL only work on localhost
+note that websockets without SSL only work on localhost (you can still use Stunnel to wrap them into an SSL Connection)
 
 ## usage
 ### Starting the WebSocket Server
