@@ -12,10 +12,10 @@ modify config/packages/snoke_websocket.yaml:
 snoke_websocket:
     context:
         tls:
-        local_cert: 'path/to/server.pem'
-        local_pk: 'path/to/private.key'
-        allow_self_signed: true
-        verify_peer: false
+            local_cert: 'path/to/server.pem'
+            local_pk: 'path/to/private.key'
+            allow_self_signed: true
+            verify_peer: false
 ````
 
 if you want to use no SSL:
