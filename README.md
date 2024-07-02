@@ -69,7 +69,7 @@ test again with `php bin/console websocket:test`
 
 
 ### Mapping Users
-
+the ConnectionWrapper contains getter and setter to match a connection with a Symfony UserInterface
 ```php
 namespace App\EventListener;
 
