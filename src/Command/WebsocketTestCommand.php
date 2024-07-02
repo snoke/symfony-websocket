@@ -69,6 +69,7 @@ class WebsocketTestCommand extends Command
                 $this->outputDecorator->note("performing handshake");
                 $this->performHandshake($connection);
                 $connection->on('data', function ($data) use ($connection, $message, $type) {
+
                     if($pos = strpos($data,'Sec-WebSocket-Accept')) {
                         $this->outputDecorator->success('Handshake successful: ' . substr($data,$pos,42));
                     }
