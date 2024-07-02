@@ -9,14 +9,14 @@ use Snoke\Websocket\Security\ConnectionWrapper;
 
 class RequestReceived extends AbstractEvent
 {
-    private array $request;
+    private mixed $request;
 
-    public function __construct(ArrayCollection $connections, ?ConnectionWrapper $connection, array $request)
+    public function __construct(ArrayCollection $connections, ?ConnectionWrapper $connection, mixed $request)
     {
         parent::__construct($connections,$connection);
         $this->request = $request;
     }
-    public function getRequest(): array
+    public function getRequest(): mixed
     {
         return $this->request;
     }

@@ -4,27 +4,26 @@ namespace Snoke\Websocket\Service;
 
 class Decoder
 {
-
-    public function unmask($data)
+    public function unmask($payload)
     {
-        $bytes = unpack('C*', $data);
-        $length = $bytes[2] & 127;
+        $length = ord($payload[1]) & 127;
 
         if ($length == 126) {
-            $masks = array_slice($bytes, 4, 4);
-            $data = array_slice($bytes, 8);
+            $masks = substr($payload, 4, 4);
+            $data = substr($payload, 8);
         } elseif ($length == 127) {
-            $masks = array_slice($bytes, 10, 4);
-            $data = array_slice($bytes, 14);
+            $masks = substr($payload, 10, 4);
+            $data = substr($payload, 14);
         } else {
-            $masks = array_slice($bytes, 2, 4);
-            $data = array_slice($bytes, 6);
+            $masks = substr($payload, 2, 4);
+            $data = substr($payload, 6);
         }
 
-        for ($i = 0; $i < count($data); ++$i) {
-            $data[$i] = $data[$i] ^ $masks[$i % 4];
+        $text = '';
+        for ($i = 0; $i < strlen($data); ++$i) {
+            $text .= $data[$i] ^ $masks[$i % 4];
         }
 
-        return json_decode(implode(array_map("chr", $data)), true);
+        return $text;
     }
 }

@@ -72,8 +72,8 @@ class WebsocketServer
                         $this->debugLog('New connection from ' . $connectionWrapper->getRemoteAddress());
                     } else {
                         $request = $this->decoder->unmask($data);
-                        if ($request && isset($request['type'])) {
-                            if ($request['type'] === 'ping') {
+                        if ($request) {
+                            if (isset($request['type'] ) && $request['type'] === 'ping') {
                                 $this->debugLog('Received ping');
                                 $connectionWrapper->write($this->encoder->mask('', 'pong'));
                             } else {
