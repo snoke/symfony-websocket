@@ -120,7 +120,7 @@ foreach($event->getConnections() as $connection) {
 - PingFrame: Triggered after DataReceived  when a ping frame is received (WebSocketOpcode::PingFrame).
 - PongFrame: Triggered after DataReceived  when a pong frame is received (WebSocketOpcode::PongFrame).
 
-## Extended
+## Advanced
 ### Message Fragmentation
 
 #### The server handles fragmented messages using the following opcodes:
