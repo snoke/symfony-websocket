@@ -107,11 +107,32 @@ foreach($event->getConnections() as $connection) {
     $connection->send($message);
 }
 ```
-
 ### Available Events
-- ServerStarted: Triggered when the server is started
-- ConnectionOpened: Triggered when a new connection is established.
-- RequestReceived: Triggered when a message is received.
-- ConnectionClosed: Triggered when a connection is closed.
+- ServerStarted: Triggered when the WebSocket server is started.
+- ConnectionOpened: Triggered when a new WebSocket connection is established.
+- RequestReceived: Triggered when a WebSocket message is received.
+- ConnectionClosed: Triggered when a WebSocket connection is closed.
 - Error: Triggered when an error occurs.
+- TextFrame: Triggered when a complete text message frame is received (WebSocketOpcode::TextFrame).
+- BinaryFrame: Triggered when a complete binary message frame is received (WebSocketOpcode::BinaryFrame).
+- ContinuationFrame: Triggered when a continuation frame is received for a fragmented message (WebSocketOpcode::ContinuationFrame).
+- ConnectionCloseFrame: Triggered when a connection close frame is received (WebSocketOpcode::ConnectionCloseFrame).
+- PingFrame: Triggered when a ping frame is received (WebSocketOpcode::PingFrame).
+- PongFrame: Triggered when a pong frame is received (WebSocketOpcode::PongFrame).
+- 
+## Extended
+### Message Fragmentation
 
+#### The server handles fragmented messages using the following opcodes:
+
+    TextFrame (0x1)
+    BinaryFrame (0x2)
+    ContinuationFrame (0x0)
+
+#### When a message is fragmented:
+
+    The first frame (Text or Binary Frame) starts with FIN set to 0.
+    Subsequent frames (Continuation Frames) continue the message with FIN set to 0 until the last frame.
+    The last frame of the message has FIN set to 1, indicating the end of the fragmented message.
+
+Ensure your application handles fragmented messages correctly based on RFC 6455 specifications.

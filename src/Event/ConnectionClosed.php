@@ -8,7 +8,7 @@ use Snoke\Websocket\Security\ConnectionWrapper;
 class ConnectionClosed extends AbstractEvent
 {
 
-    public function __construct(ArrayCollection $connections, ?ConnectionWrapper $connection)
+    public function __construct(protected  ArrayCollection $connections, protected  ?ConnectionWrapper $connection)
     {
         parent::__construct($connections,$connection);
     }
