@@ -114,3 +114,4 @@ foreach($event->getConnections() as $connection) {
 - RequestReceived: Triggered when a message is received.
 - ConnectionClosed: Triggered when a connection is closed.
 - Error: Triggered when an error occurs.
+
