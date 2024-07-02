@@ -77,6 +77,7 @@ class WebsocketServer
                                 $this->debugLog('Received ping');
                                 $connectionWrapper->write($this->encoder->mask('', 'pong'));
                             } else {
+                                $this->debugLog('Data received:' . is_string($request) ? $request : json_encode($request));
                                 $this->eventDispatcher->dispatch(new RequestReceived($this->connections, $connectionWrapper, $request));
                             }
                         }
