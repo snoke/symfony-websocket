@@ -21,12 +21,9 @@ class ConnectionWrapper implements ConnectionInterface
         $this->connection = $connection;
     }
 
-    public function send(mixed $payload, string $type = 'message', bool $masked = true): static
+    public function send(mixed $payload, bool $masked = true): static
     {
-        $this->write($this->encoder->mask(json_encode([
-            'type' => $type,
-            'payload' => $payload,
-        ]),'text',$masked));
+        $this->write($this->encoder->mask(is_string($payload) ? $payload : json_encode($payload),'text',$masked));
         return $this;
     }
 

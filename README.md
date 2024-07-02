@@ -1,10 +1,9 @@
-# Symfony Server Websocket Server Bundle
+# Symfony Websocket Server Bundle
 Websocket Server Bundle for Symfony 7.1
 
 ## installation
 
-checkout library 
-
+checkout library
 `composer req snoke/symfony-websocket`
 
 modify `config/packages/snoke_websocket.yaml`:
@@ -18,14 +17,14 @@ snoke_websocket:
             verify_peer: false
 ````
 
-if you want to use no TLS:
+if you do not want to use TLS:
 ````yml
 snoke_websocket:
     context: []
 ````
-note that websockets without SSL only work on localhost (you can still use Stunnel to wrap them into an SSL Connection)
+note that websockets without TLS only work on localhost (tho you can still use Stunnel to wrap them into a TLS Connection)
 
-## usage
+## getting started
 ### Starting the WebSocket Server
 
 Use the Symfony console command to start the WebSocket server
@@ -36,21 +35,38 @@ You can optionally specify the IP address and port:
 
 `php bin/console websocket:start --ip=127.0.0.1 --port=9000`
 
+![](./Docs/Images/serverstart.png)
+
+### testing the server
+
+`php bin/console websocket:test`
+
+![](./Docs/Images/servertest.png)
+
 ### Registering Event Listeners
 
-to react to WebSocket events, create your own listeners and register them with the Symfony event dispatcher.
+to react to WebSocket events, create your own listeners.
 
-Websocket-Request
-```javascript
+```php
+use Snoke\Websocket\Event\RequestReceived;
+use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
+
+#[AsEventListener(event: RequestReceived::class, method: 'onRequestReceived')]
+final class MessageListener
 {
-    type => 'auth', payload => {
-        identifier => "john@doe.com",
-        password => "test"
+    public function onRequestReceived(RequestReceived $event): void
+    {
+        $connection = $event->getConnection();
+        $connection->send("Salutations, intergalactic sphere!");
     }
 }
 ```
+testing again with `php bin/console websocket:test`
 
-Example of a listener:
+![](./Docs/Images/listenertest.png)
+
+
+### Mapping Users
 
 ```php
 namespace App\EventListener;
@@ -76,7 +92,14 @@ final class AuthListener
     }
 }
 ```
-this example also shows how the ConnectionWrapper contains a User property which enables you to match Connections to Users
+
+### Broadcasting
+you can access all connections in the Listeners through the event
+```php
+foreach($event->getConnections() as $connection) {
+    $connection->send($message);
+}
+```
 
 ### Available Events
 - ServerStarted: Triggered when the server is started
@@ -84,11 +107,3 @@ this example also shows how the ConnectionWrapper contains a User property which
 - RequestReceived: Triggered when a message is received.
 - ConnectionClosed: Triggered when a connection is closed.
 - Error: Triggered when an error occurs.
-
-## Broadcasting
-you can access all connections in the Listeners through the event
-```php
-foreach($event->getConnections() as $connection) {
-    $connection->send($message);
-}
-```
