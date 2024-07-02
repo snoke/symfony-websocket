@@ -39,6 +39,8 @@ You can optionally specify the IP address and port:
 
 ### testing the server
 
+you can connect and send a message to your websocket server with following command:
+
 `php bin/console websocket:test`
 
 ![](./Docs/Images/servertest.png)
@@ -61,7 +63,7 @@ final class MessageListener
     }
 }
 ```
-testing again with `php bin/console websocket:test`
+test again with `php bin/console websocket:test`
 
 ![](./Docs/Images/listenertest.png)
 
