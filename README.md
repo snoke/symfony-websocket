@@ -113,10 +113,10 @@ foreach($event->getConnections() as $connection) {
 - ConnectionClosed: Triggered when a WebSocket connection is closed.
 - Error: Triggered when an error occurs.
 - MessageReceived: Triggered when a WebSocket message is received.
-- TextFrame: Triggered after DataReceived when a text message frame is received (WebSocketOpcode::TextFrame).
-- BinaryFrame: Triggered after DataReceived  when a binary message frame is received (WebSocketOpcode::BinaryFrame).
-- ContinuationFrame: Triggered after DataReceived d when a continuation frame is received for a fragmented message (WebSocketOpcode::ContinuationFrame).
-- ConnectionCloseFrame: Triggered after DataReceived when a connection close frame is received (WebSocketOpcode::ConnectionCloseFrame).
+- TextFrame: Triggered after MessageReceived when a text message frame is received (WebSocketOpcode::TextFrame).
+- BinaryFrame: Triggered after MessageReceived  when a binary message frame is received (WebSocketOpcode::BinaryFrame).
+- ContinuationFrame: Triggered after MessageReceived d when a continuation frame is received for a fragmented message (WebSocketOpcode::ContinuationFrame).
+- ConnectionCloseFrame: Triggered after MessageReceived when a connection close frame is received (WebSocketOpcode::ConnectionCloseFrame).
 - PingFrame: Triggered after DataReceived  when a ping frame is received (WebSocketOpcode::PingFrame).
 - PongFrame: Triggered after DataReceived  when a pong frame is received (WebSocketOpcode::PongFrame).
 
