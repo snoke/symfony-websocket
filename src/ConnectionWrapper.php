@@ -5,6 +5,7 @@ namespace Snoke\Websocket\Security;
 use React\Socket\ConnectionInterface;
 use React\Stream\WritableStreamInterface;
 use Snoke\Websocket\Service\Encoder;
+use Snoke\Websocket\WebSocketOpcode;
 use Symfony\Component\Security\Core\User\UserInterface;
 
 class ConnectionWrapper implements ConnectionInterface
@@ -21,9 +22,9 @@ class ConnectionWrapper implements ConnectionInterface
         $this->connection = $connection;
     }
 
-    public function send(mixed $payload, bool $masked = true): static
+    public function send(mixed $payload,  WebSocketOpcode $type = WebSocketOpcode::TextFrame,bool $masked = true): static
     {
-        $this->write($this->encoder->mask(is_string($payload) ? $payload : json_encode($payload),'text',$masked));
+        $this->write($this->encoder->mask(is_string($payload) ? $payload : json_encode($payload),$type,$masked));
         return $this;
     }
 

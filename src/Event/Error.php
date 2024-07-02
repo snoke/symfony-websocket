@@ -9,12 +9,9 @@ use Throwable;
 class Error  extends AbstractEvent
 {
 
-    private Throwable $error;
-
-    public function __construct(ArrayCollection $connections, ?ConnectionWrapper $connection,  Throwable $error)
+    public function __construct(protected  ArrayCollection $connections, protected  ?ConnectionWrapper $connection,  protected  Throwable $error)
     {
         parent::__construct($connections,$connection);
-        $this->error = $error;
     }
     public function getError()
     {

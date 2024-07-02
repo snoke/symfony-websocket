@@ -1,15 +1,9 @@
 <?php
 
 namespace Snoke\Websocket\Event;
-
-use Doctrine\Common\Collections\ArrayCollection;
-use Snoke\Websocket\Security\ConnectionWrapper;
-
-class ServerStarted extends AbstractEvent
+class ServerStarted
 {
-
-    public function __construct( ArrayCollection $connections, ?ConnectionWrapper $connection)
+    public function __construct()
     {
-        parent::__construct($connections,$connection);
     }
 }
