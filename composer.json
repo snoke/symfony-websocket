@@ -17,7 +17,7 @@
         },
         "symfony": {
             "allow-contrib": true,
-            "require": "7.1.*"
+            "require": "^7"
         }
     },
     "require": {
@@ -25,6 +25,9 @@
         "react/socket": "^1.15",
         "react/event-loop": "^1.5",
         "symfony/console": "^7.1",
-        "symfony/event-dispatcher": "^7.1"
+        "symfony/event-dispatcher": "^7.1",
+        "doctrine/collections": "^2.2",
+        "psr/log": "^3.0",
+        "symfony/dependency-injection": "^7.1"
     }
 }
