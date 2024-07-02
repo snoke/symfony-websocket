@@ -58,7 +58,7 @@ class WebsocketTestCommand extends Command
         $headers .= "Sec-WebSocket-Version: 13\r\n\r\n";
         $connection->write($headers);
     }
-    public function connect(string $host = '127.0.0.1', int $port = 8080, string $message = 'test',string $type = 'text'): void {
+    public function connect(string $host = '127.0.0.1', int $port = 8080, string $message = 'Hello World!', string $type = 'text'): void {
 
             $loop = Loop::get();
             $connector = new Connector($loop);
