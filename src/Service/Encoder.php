@@ -2,69 +2,42 @@
 
 namespace Snoke\Websocket\Service;
 
+use Snoke\Websocket\WebSocketOpcode;
+
 class Encoder
 {
-    public function mask($payload, $type = 'text', $masked = false)
+    public function mask(string $payload, WebSocketOpcode $opcode, bool $masked = true, bool $fin = true): string
     {
-        $frameHead = array();
+        $frameHead = [];
         $payloadLength = strlen($payload);
 
-        switch ($type) {
-            case 'text':
-                $frameHead[0] = 129;
-                break;
+        // Set the FIN bit based on the $fin parameter
+        $frameHead[0] = ($fin ? 0x80 : 0x00) | $opcode->value;
 
-            case 'close':
-                $frameHead[0] = 136;
-                break;
-
-            case 'ping':
-                $frameHead[0] = 137;
-                break;
-
-            case 'pong':
-                $frameHead[0] = 138;
-                break;
-        }
-
-        if ($payloadLength > 65535) {
-            $payloadLengthBin = str_split(sprintf('%064b', $payloadLength), 8);
-            $frameHead[1] = ($masked === true) ? 255 : 127;
-            for ($i = 0; $i < 8; $i++) {
-                $frameHead[$i + 2] = bindec($payloadLengthBin[$i]);
-            }
-            if ($frameHead[2] > 127) {
-                return;
-            }
-        } elseif ($payloadLength > 125) {
-            $payloadLengthBin = str_split(sprintf('%016b', $payloadLength), 8);
-            $frameHead[1] = ($masked === true) ? 254 : 126;
-            $frameHead[2] = bindec($payloadLengthBin[0]);
-            $frameHead[3] = bindec($payloadLengthBin[1]);
+        if ($payloadLength <= 125) {
+            $frameHead[1] = $masked ? 0x80 | $payloadLength : $payloadLength;
+        } elseif ($payloadLength >= 126 && $payloadLength <= 65535) {
+            $frameHead[1] = $masked ? 0xFE : 126;
+            $frameHead = array_merge($frameHead, str_split(pack('n', $payloadLength)));
         } else {
-            $frameHead[1] = ($masked === true) ? $payloadLength + 128 : $payloadLength;
+            $frameHead[1] = $masked ? 0xFF : 127;
+            $frameHead = array_merge($frameHead, str_split(pack('J', $payloadLength)));
         }
 
-        foreach (array_keys($frameHead) as $i) {
-            $frameHead[$i] = chr($frameHead[$i]);
+        foreach ($frameHead as &$val) {
+            $val = chr($val);
         }
+        $mask = '';
 
-        $frame = implode('', $frameHead);
-
-        $mask = array();
-        if ($masked === true) {
+        if ($masked) {
             for ($i = 0; $i < 4; $i++) {
-                $mask[$i] = chr(rand(0, 255));
+                $mask .= chr(rand(0, 255));
             }
-            $frame .= implode('', $mask);
+            for ($i = 0; $i < $payloadLength; $i++) {
+                $payload[$i] = $payload[$i] ^ $mask[$i % 4];
+            }
         }
 
-        for ($i = 0; $i < $payloadLength; $i++) {
-            $frame .= ($masked === true) ? $payload[$i] ^ $mask[$i % 4] : $payload[$i];
-        }
-
-        return $frame;
+        return implode('', $frameHead) . $mask . $payload;
     }
-
-
 }
