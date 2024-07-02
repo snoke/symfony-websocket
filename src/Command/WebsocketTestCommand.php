@@ -35,7 +35,7 @@ class WebsocketTestCommand extends Command
             ->addOption('ip', null, InputOption::VALUE_OPTIONAL, 'custom ip', '127.0.0.1')
             ->addOption('port', null, InputOption::VALUE_OPTIONAL, 'custom port', '8080')
             ->addOption('data', null, InputOption::VALUE_OPTIONAL, 'data to test','Hello World!')
-            ->addOption('opCode', null, InputOption::VALUE_OPTIONAL, 'Data type', WebSocketOpcode::ConnectionCloseFrame->value);
+            ->addOption('opCode', null, InputOption::VALUE_OPTIONAL, 'Data type', WebSocketOpcode::TextFrame->value);
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int

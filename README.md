@@ -1,5 +1,5 @@
 # Symfony Websocket Server Bundle
-Websocket Server Bundle for Symfony 7
+RFC 6455-compliant Websocket Server Bundle for Symfony 7
 
 ## installation
 
@@ -50,13 +50,13 @@ you can connect and send a message to your websocket server with following comma
 to react to WebSocket events, create your own listeners.
 
 ```php
-use Snoke\Websocket\Event\RequestReceived;
+use Snoke\Websocket\Event\MessageReceived;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 
-#[AsEventListener(event: RequestReceived::class, method: 'onRequestReceived')]
+#[AsEventListener(event: MessageReceived::class, method: 'onRequestReceived')]
 final class MessageListener
 {
-    public function onRequestReceived(RequestReceived $event): void
+    public function onRequestReceived(MessageReceived $event): void
     {
         $connection = $event->getConnection();
         $connection->send("Salutations, intergalactic sphere!");
@@ -110,16 +110,16 @@ foreach($event->getConnections() as $connection) {
 ### Available Events
 - ServerStarted: Triggered when the WebSocket server is started.
 - ConnectionOpened: Triggered when a new WebSocket connection is established.
-- RequestReceived: Triggered when a WebSocket message is received.
 - ConnectionClosed: Triggered when a WebSocket connection is closed.
 - Error: Triggered when an error occurs.
-- TextFrame: Triggered when a complete text message frame is received (WebSocketOpcode::TextFrame).
-- BinaryFrame: Triggered when a complete binary message frame is received (WebSocketOpcode::BinaryFrame).
-- ContinuationFrame: Triggered when a continuation frame is received for a fragmented message (WebSocketOpcode::ContinuationFrame).
-- ConnectionCloseFrame: Triggered when a connection close frame is received (WebSocketOpcode::ConnectionCloseFrame).
-- PingFrame: Triggered when a ping frame is received (WebSocketOpcode::PingFrame).
-- PongFrame: Triggered when a pong frame is received (WebSocketOpcode::PongFrame).
-- 
+- MessageReceived: Triggered when a WebSocket message is received.
+- TextFrame: Triggered after DataReceived when a text message frame is received (WebSocketOpcode::TextFrame).
+- BinaryFrame: Triggered after DataReceived  when a binary message frame is received (WebSocketOpcode::BinaryFrame).
+- ContinuationFrame: Triggered after DataReceived d when a continuation frame is received for a fragmented message (WebSocketOpcode::ContinuationFrame).
+- ConnectionCloseFrame: Triggered after DataReceived when a connection close frame is received (WebSocketOpcode::ConnectionCloseFrame).
+- PingFrame: Triggered after DataReceived  when a ping frame is received (WebSocketOpcode::PingFrame).
+- PongFrame: Triggered after DataReceived  when a pong frame is received (WebSocketOpcode::PongFrame).
+
 ## Extended
 ### Message Fragmentation
 

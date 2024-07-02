@@ -13,7 +13,7 @@ use Snoke\Websocket\Event\ContinuationFrame;
 use Snoke\Websocket\Event\HandshakeFailed;
 use Snoke\Websocket\Event\PingFrame;
 use Snoke\Websocket\Event\PongFrame;
-use Snoke\Websocket\Event\DataReceived;
+use Snoke\Websocket\Event\MessageReceived;
 use Snoke\Websocket\Event\ServerStarted;
 use Snoke\Websocket\Event\ConnectionClosed;
 use Snoke\Websocket\Event\ConnectionEstablished;
@@ -82,7 +82,7 @@ class WebsocketServer
                         $this->debugLog('New connection from ' . $connectionWrapper->getRemoteAddress());
                     } else {
                         $frame = $this->decoder->decodeFrame($data);
-                        $this->eventDispatcher->dispatch(new DataReceived($this->connections, $connectionWrapper, $frame));
+                        $this->eventDispatcher->dispatch(new MessageReceived($this->connections, $connectionWrapper, $frame));
                         $this->debugLog('Frame received ' . json_encode($frame));
                         $this->handleFrame($connectionWrapper, $frame);
                     }
