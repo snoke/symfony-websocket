@@ -91,6 +91,7 @@ final class AuthListener
         $request = $event->getRequest();
         $connection = $event->getConnection();
         if ($request['type'] === 'auth') {
+            $payload = $request['payload'];
             $user = $this->authenticator->authenticate($payload['identifier'],$payload['password']);
             $connection->setUser($user);
             $connection->send($serializer->serialize($user, 'json'));
