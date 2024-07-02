@@ -71,23 +71,27 @@ testing again with `php bin/console websocket:test`
 ```php
 namespace App\EventListener;
 
+use App\Security\Authenticator;
 use Snoke\Websocket\Event\RequestReceived;
+use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 
 #[AsEventListener(event: RequestReceived::class, method: 'onRequestReceived')]
 final class AuthListener
 {
+    public function __construct(
+        private readonly Authenticator,
+        private readonly SerializerInterface
+    ) {}
+    
     public function onRequestReceived(RequestReceived $event): void
     {
         $request = $event->getRequest();
         $connection = $event->getConnection();
         if ($request['type'] === 'auth') {
             $user = $this->authenticator->authenticate($payload['identifier'],$payload['password']);
-            if ($user) {
-                $connection->setUser($user);
-                
-                $connection->send($user->getRoles());
-            }
+            $connection->setUser($user);
+            $connection->send($serializer->serialize($user, 'json'));
         }
     }
 }
