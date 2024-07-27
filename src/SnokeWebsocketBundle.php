@@ -21,14 +21,7 @@ class SnokeWebsocketBundle extends Bundle
     public function build(ContainerBuilder $container): void
     {
         parent::build($container);
-
-        $configFile = $container->getParameter('kernel.project_dir') . '/config/packages/snoke_websocket.yaml';
-
-        $bundleConfigFile = __DIR__ . '/Resources/config/snoke_websocket.yaml';
-
-        if (!file_exists($configFile)) {
-            $defaultConfig = file_get_contents($bundleConfigFile);
-            file_put_contents($configFile, $defaultConfig);
-        }
+        $container->addCompilerPass(new ConfigurationPass());
+        $container->addCompilerPass(new UninstallPass(), PassConfig::TYPE_BEFORE_REMOVING);
     }
 }

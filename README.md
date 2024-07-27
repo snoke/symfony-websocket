@@ -88,7 +88,7 @@ final class AuthListener
     
     public function onRequestReceived(RequestReceived $event): void
     {
-        $request = $event->getRequest();
+        $request = $event->getFrame();
         $connection = $event->getConnection();
         if ($request['type'] === 'auth') {
             $payload = $request['payload'];
