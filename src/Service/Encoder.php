@@ -18,10 +18,10 @@ class Encoder
             $frameHead[1] = $masked ? 0x80 | $payloadLength : $payloadLength;
         } elseif ($payloadLength >= 126 && $payloadLength <= 65535) {
             $frameHead[1] = $masked ? 0xFE : 126;
-            $frameHead = array_merge($frameHead, str_split(pack('n', $payloadLength)));
+            $frameHead = array_merge($frameHead, unpack("C*", pack('n', $payloadLength)));
         } else {
             $frameHead[1] = $masked ? 0xFF : 127;
-            $frameHead = array_merge($frameHead, str_split(pack('J', $payloadLength)));
+            $frameHead = array_merge($frameHead, unpack("C*", pack('J', $payloadLength)));
         }
 
         foreach ($frameHead as &$val) {
