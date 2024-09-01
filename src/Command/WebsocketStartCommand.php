@@ -3,7 +3,7 @@
 namespace Snoke\Websocket\Command;
 
 use Psr\Log\LoggerInterface;
-use Snoke\Websocket\Service\WebsocketServer;
+use Snoke\Websocket\WebsocketServer;
 use Snoke\Websocket\Service\Decoder;
 use Snoke\Websocket\Service\Encoder;
 use Symfony\Component\Console\Attribute\AsCommand;

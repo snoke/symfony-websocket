@@ -1,11 +1,10 @@
 <?php
 
-namespace Snoke\Websocket\Security;
+namespace Snoke\Websocket;
 
 use React\Socket\ConnectionInterface;
 use React\Stream\WritableStreamInterface;
 use Snoke\Websocket\Service\Encoder;
-use Snoke\Websocket\WebSocketOpcode;
 use Symfony\Component\Security\Core\User\UserInterface;
 
 class ConnectionWrapper implements ConnectionInterface

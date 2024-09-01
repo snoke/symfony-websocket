@@ -1,6 +1,6 @@
 <?php
 
-namespace Snoke\Websocket\Service;
+namespace Snoke\Websocket;
 
 use Doctrine\Common\Collections\ArrayCollection;
 use Exception;
@@ -19,11 +19,9 @@ use Snoke\Websocket\Event\ConnectionClosed;
 use Snoke\Websocket\Event\ConnectionEstablished;
 use Snoke\Websocket\Event\Error;
 use Snoke\Websocket\Event\TextFrame;
-use Snoke\Websocket\Security\ConnectionWrapper;
 use Snoke\Websocket\Service\Decoder;
 use Snoke\Websocket\Service\Encoder;
 use React\Socket\ConnectionInterface;
-use Snoke\Websocket\WebSocketOpcode;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;

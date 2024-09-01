@@ -3,7 +3,7 @@
 namespace Snoke\Websocket\Event;
 
  use Doctrine\Common\Collections\ArrayCollection;
- use Snoke\Websocket\Security\ConnectionWrapper;
+ use Snoke\Websocket\ConnectionWrapper;
 
  class TextFrame extends AbstractFrame
  {

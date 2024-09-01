@@ -5,7 +5,7 @@ namespace Snoke\Websocket\Event;
 use Doctrine\Common\Collections\ArrayCollection;
 use Snoke\Websocket\Entity\Message;
 use Snoke\Websocket\Entity\Request;
-use Snoke\Websocket\Security\ConnectionWrapper;
+use Snoke\Websocket\ConnectionWrapper;
 
 class HandshakeFailed
 {
